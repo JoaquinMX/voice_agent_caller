@@ -10,6 +10,7 @@ services:
       - BROKER_URL=redis://redis:6379/0
     depends_on:
       - redis
+    restart: on-failure
 
   conversation-orchestrator:
     build: ./services/conversation_orchestrator
@@ -33,6 +34,7 @@ services:
       - DATABASE_URL=postgresql+psycopg2://voice_agent:voice_agent@postgres:5432/voice_agent
     depends_on:
       - postgres
+    restart: on-failure
 
   redis:
     image: redis:7.2-alpine

@@ -1,19 +1,19 @@
 .PHONY: format lint up down logs deps
 
 format:
-python -m ruff format services
+	python -m ruff format services
 
 lint:
-python -m ruff check services
+	python -m ruff check services
 
 up:
-docker compose up --build
+	docker compose up --build
 
 down:
-docker compose down
+	docker compose down
 
 logs:
-docker compose logs -f
+	docker compose logs -f
 
 deps:
-pip install -e .[dev]
+	source venv/bin/activate && pip install ruff pytest
