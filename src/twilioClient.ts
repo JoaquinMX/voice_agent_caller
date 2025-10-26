@@ -1,14 +1,28 @@
-import Twilio from 'twilio';
+import Twilio, { Twilio as TwilioClient } from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
+let cachedClient: TwilioClient | null = null;
+let warnedMissingCredentials = false;
 
-if (!accountSid || !authToken) {
-  // Delay throwing until runtime usage to ease testing without credentials.
-  console.warn('Twilio credentials are not fully configured. Outbound calls will fail.');
+export function getTwilioClient(): TwilioClient | null {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken) {
+    if (!warnedMissingCredentials) {
+      console.warn(
+        'Twilio credentials are not fully configured. Outbound calls will fail until they are provided.'
+      );
+      warnedMissingCredentials = true;
+    }
+    return null;
+  }
+
+  if (!cachedClient) {
+    cachedClient = Twilio(accountSid, authToken);
+  }
+
+  return cachedClient;
 }
-
-export const twilioClient = accountSid && authToken ? Twilio(accountSid, authToken) : null;
 
 interface MakeOutboundCallParams {
   to: string;
@@ -17,11 +31,13 @@ interface MakeOutboundCallParams {
 }
 
 export async function makeOutboundCall({ to, from, url }: MakeOutboundCallParams) {
-  if (!twilioClient) {
+  const client = getTwilioClient();
+
+  if (!client) {
     throw new Error('Twilio client is not configured. Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.');
   }
 
-  return twilioClient.calls.create({
+  return client.calls.create({
     to,
     from,
     url,
